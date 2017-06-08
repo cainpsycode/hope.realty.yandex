@@ -1,0 +1,8 @@
+*.suo
+**/*.ldb
+*.msi
+
+/bin/
+/obj/
+/packages/
+/.vs
