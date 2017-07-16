@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConvertExcelToYrl.cs" />
+    <Compile Include="Counters.cs" />
     <Compile Include="DescriptionAttribute.cs" />
     <Compile Include="ExtensionHelper.cs" />
     <Compile Include="OfferLocation.cs" />

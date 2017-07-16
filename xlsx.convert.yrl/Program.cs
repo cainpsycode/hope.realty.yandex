@@ -41,9 +41,20 @@ namespace xlsx.convert.yrl
                 command.AgentEmail,
                 command.AgentLogo);
 
-            XDocument doc = new ConvertExcelToYrl(_logger, salesAgent)
-                .GetXml(command.ExcelFile, command.SkipRows.HasValue ? command.SkipRows.Value : 0);
-            doc.Save("export.xml");
+            var converter = new ConvertExcelToYrl(_logger, salesAgent);
+            XDocument doc = converter.GetXml(
+                command.ExcelFile, 
+                command.SkipRows.HasValue ? command.SkipRows.Value : 0);
+
+            if (converter.Counters.Exceptions.Any())
+            {
+                _logger.Warn("Converting errors: {0}", converter.Counters.Exceptions.Count());
+            }
+            else
+            {
+                doc.Save("export.xml");
+            }
+            
             _logger.Info("finished");
         }
     }

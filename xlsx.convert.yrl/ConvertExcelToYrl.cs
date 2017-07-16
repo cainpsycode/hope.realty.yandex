@@ -20,10 +20,13 @@ namespace xlsx.convert.yrl
         private Logger _logger;
         private SalesAgent _salesAgent;
 
+        public Counters Counters { get; private set; }
+
         public ConvertExcelToYrl(Logger logger, SalesAgent salesAgent)
         {
             _logger = logger;
             _salesAgent = salesAgent;
+            Counters = new Counters();
         }
 
         private static string ExcelColumnFromNumber(int column)
@@ -281,6 +284,7 @@ namespace xlsx.convert.yrl
                 }
                 catch (Exception ex)
                 {
+                    Counters.ExceptionInc(ex);
                     _logger.Error("Ошибка обработки строки {0}: {1}", n, ex);
                     return null;
                 }
@@ -337,28 +341,44 @@ namespace xlsx.convert.yrl
             string phone = new Regex(@"^\+?8").Replace(matchAgent.Groups[1].Value, "+7");
             string agent = matchAgent.Groups[2].Value;
 
-            float[] roomsArea = rowValue(ColumnIndex.RoomsArea).Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).Select(float.Parse).ToArray();
+            float[] roomsArea = rowValue(ColumnIndex.RoomsArea).Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries).Select(i => float.Parse(i, CultureInfo.InvariantCulture)).ToArray();
             if (roomsArea.Length > 0 && (roomsArea.Length != int.Parse(rowValue(ColumnIndex.Rooms))))
             {
                 throw new Exception("Количество перечисленных площадей комнат не соответствует количеству комнат");
             };
 
+            Func<ColumnIndex, Func<string, object>, object> safeParse = (column, func) =>
+            {
+                string value = null;
+                try
+                {
+                    value = rowValue(column);
+                    return func != null ? func(value) : value;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error("Parse column {0} value {1} failed: {2}", column, value ?? "Undefined", ex);
+                    Counters.ExceptionInc(ex);
+                    return null;
+                }
+            };
+
             var offer = new XElement(
                 "offer",
-                new XAttribute("internal-id", int.Parse(rowValue(ColumnIndex.Id))),
+                new XAttribute("internal-id", safeParse(ColumnIndex.Id, i => int.Parse(i))),
                 new XElement("type", "продажа"),
                 new XElement("property-type", "жилая"),
-                new XElement("category", rowValue(ColumnIndex.Category)),
-                new XElement("url", rowValue(ColumnIndex.Url)),
-                new XElement("creation-date", DateTime.Parse(rowValue(ColumnIndex.CreationDate)).ToIso8601()),
-                new XElement("last-update-date", DateTime.Parse(rowValue(ColumnIndex.LastUpdateDate)).ToIso8601()),
+                new XElement("category", safeParse(ColumnIndex.Category, null)),
+                new XElement("url", safeParse(ColumnIndex.Url, null)),
+                new XElement("creation-date", safeParse(ColumnIndex.CreationDate, i => DateTime.Parse(i).ToIso8601())),
+                new XElement("last-update-date", safeParse(ColumnIndex.LastUpdateDate, i => DateTime.Parse(i).ToIso8601())),
                 new XElement("location", new XElement[] {
                     new XElement("country", "Россия"),
                     new XElement("region", "Пермский край"),
-                    new XElement("district", rowValue(ColumnIndex.District)),
-                    new XElement("locality-name", rowValue(ColumnIndex.LocalityName)),
-                    new XElement("sub-locality-name", rowValue(ColumnIndex.SubLocalityName)),
-                    new XElement("address", rowValue(ColumnIndex.Address))
+                    new XElement("district", safeParse(ColumnIndex.District, null)),
+                    new XElement("locality-name", safeParse(ColumnIndex.LocalityName, null)),
+                    new XElement("sub-locality-name", safeParse(ColumnIndex.SubLocalityName, null)),
+                    new XElement("address", safeParse(ColumnIndex.Address, null))
                 }.Where(i => !string.IsNullOrEmpty(i.Value))
                 ),
                 new XElement("sales-agent",
@@ -371,11 +391,11 @@ namespace xlsx.convert.yrl
                 ),
                 new XElement("deal-status", rowValue(ColumnIndex.DealStatus)),
                 new XElement("price",
-                    new XElement("value", decimal.Parse(rowValue(ColumnIndex.Price)) * 1000m),
+                    new XElement("value", safeParse(ColumnIndex.Price, i => decimal.Parse(i) * 1000m)),
                     new XElement("currency", "RUR")
                 ),
 //                new XElement("image", null),
-                buildSpace("area", rowValue(ColumnIndex.Area)),
+                buildSpace("area", (string)safeParse(ColumnIndex.Area, null)),
                 new XElement[]
                 {
                     buildSpaceColumn("living-space", ColumnIndex.Living),
@@ -383,23 +403,23 @@ namespace xlsx.convert.yrl
                 }
                 .Concat(roomsArea.Select(i => buildSpace("room-space", i.ToString(CultureInfo.InvariantCulture))))
                 .Where(i => i != null),
-                new XElement("renovation", rowValue(ColumnIndex.Renovation)),
-                new XElement("description", rowValue(ColumnIndex.Description)),
+                new XElement("renovation", safeParse(ColumnIndex.Renovation, null)),
+                new XElement("description", safeParse(ColumnIndex.Description, null)),
                 new XElement("new-flat", "да"),
-                new XElement("floor", rowValue(ColumnIndex.Floor)),
-                new XElement("rooms", rowValue(ColumnIndex.Rooms)),
+                new XElement("floor", safeParse(ColumnIndex.Floor, null)),
+                new XElement("rooms", safeParse(ColumnIndex.Rooms, null)),
                 new XElement[] {
-                    new XElement("studio", rowValue(ColumnIndex.Studio)),
-                    new XElement("open-plan", rowValue(ColumnIndex.OpenPlan)),
-                    new XElement("balcony", rowValue(ColumnIndex.Balcony))
+                    new XElement("studio", safeParse(ColumnIndex.Studio, null)),
+                    new XElement("open-plan", safeParse(ColumnIndex.OpenPlan, null)),
+                    new XElement("balcony", safeParse(ColumnIndex.Balcony, null))
                 }.Where(i => !string.IsNullOrEmpty(i.Value)),
-                new XElement("floors-total", rowValue(ColumnIndex.FloorsTotal)),
+                new XElement("floors-total", safeParse(ColumnIndex.FloorsTotal, null)),
 //                new XElement("building-name", rowValue(ColumnIndex.BuildingName)),
 //                new XElement("yandex-building-id", rowValue(ColumnIndex.YandexBuildingId)),
-                new XElement("building-state", BuildingState[rowValue(ColumnIndex.BuildingState)]),
-                new XElement("built-year", rowValue(ColumnIndex.BuildingYear)),
-                new XElement("ready-quarter", rowValue(ColumnIndex.ReadyQuarter)),
-                new XElement("building-type", rowValue(ColumnIndex.BuildingType))
+                new XElement("building-state", safeParse(ColumnIndex.BuildingState, i => BuildingState[i])),
+                new XElement("built-year", safeParse(ColumnIndex.BuildingYear, null)),
+                new XElement("ready-quarter", safeParse(ColumnIndex.ReadyQuarter, null)),
+                new XElement("building-type", safeParse(ColumnIndex.BuildingType, null))
             );
 
             return offer;

@@ -2,7 +2,7 @@
 **/*.ldb
 *.msi
 
-/bin/
-/obj/
+bin/
+obj/
 /packages/
 /.vs
