@@ -1,0 +1,33 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="xlsx.convert.yrl" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ftpUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ftp://ann.perm.ru</Value>
+    </Setting>
+    <Setting Name="ftpUser" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ftpPassword" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AgentOrganization" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ООО «Агентство недвижимости «Надежда»</Value>
+    </Setting>
+    <Setting Name="AgentPhones" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">+73422652652 +73422423004</Value>
+    </Setting>
+    <Setting Name="AgentUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://www.ann.perm.ru/</Value>
+    </Setting>
+    <Setting Name="AgentEmail" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">nadejda@mail.ru</Value>
+    </Setting>
+    <Setting Name="AgentLogo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://www.ann.perm.ru/img/logo2.png</Value>
+    </Setting>
+    <Setting Name="SkipRows" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

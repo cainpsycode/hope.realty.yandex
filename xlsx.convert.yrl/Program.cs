@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Xml.Linq;
 using NLog;
 
@@ -24,27 +26,36 @@ namespace xlsx.convert.yrl
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
+        [STAThread]
         static void Main(string[] args)
         {
-            var command = Args.Configuration.Configure<CommandObject>().CreateAndBind(args);
-            if (command.ExcelFile == null)
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Multiselect = false;
+            ofd.Title = "Выберите excel файл";
+            if (ofd.ShowDialog() != DialogResult.OK)
             {
                 return;
             }
 
+//            var command = Args.Configuration.Configure<CommandObject>().CreateAndBind(args);
+//            if (command.ExcelFile == null)
+//            {
+//                return;
+//            }
+
             var salesAgent = new SalesAgent(
                 string.Empty,
-                command.AgentOrganization, 
-                command.AgentPhones, 
-                SalesAgent.CategoryType.Agency, 
-                command.AgentUrl, 
-                command.AgentEmail,
-                command.AgentLogo);
+                Settings.Default.AgentOrganization,
+                Settings.Default.AgentPhones.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries), 
+                SalesAgent.CategoryType.Agency,
+                Settings.Default.AgentUrl,
+                Settings.Default.AgentEmail,
+                Settings.Default.AgentLogo);
 
             var converter = new ConvertExcelToYrl(_logger, salesAgent);
             XDocument doc = converter.GetXml(
-                command.ExcelFile, 
-                command.SkipRows.HasValue ? command.SkipRows.Value : 0);
+                ofd.FileName,
+                Settings.Default.SkipRows);
 
             if (converter.Counters.Exceptions.Any())
             {
@@ -53,6 +64,16 @@ namespace xlsx.convert.yrl
             else
             {
                 doc.Save("export.xml");
+                var client = new FtpWebClient(Settings.Default.ftpUrl, Settings.Default.ftpUser, Settings.Default.ftpPassword);
+                client.ChangeWorkingDirectory("httpdocs");
+                string[] items = client.ListDirectory();
+                bool isExist = items.Any(i => i.Equals("httpdocs/hope-realty-yandex.xml"));
+                if (isExist)
+                {
+                    client.DownloadFile("hope-realty-yandex.xml", $"hope-realty-yandex-{DateTime.Now.ToString("yyyyMMdd-hhmm")}-backup.xml");
+                }
+                string result = client.UploadFile("export.xml", "hope-realty-yandex.xml");
+                _logger.Info($"ftp upload result: {result}");
             }
             
             _logger.Info("finished");
