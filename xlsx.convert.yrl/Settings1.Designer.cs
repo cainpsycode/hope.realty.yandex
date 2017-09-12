@@ -34,7 +34,7 @@ namespace xlsx.convert.yrl {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("uannpr30")]
         public string ftpUser {
             get {
                 return ((string)(this["ftpUser"]));
@@ -101,6 +101,30 @@ namespace xlsx.convert.yrl {
         public int SkipRows {
             get {
                 return ((int)(this["SkipRows"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("realtyimages")]
+        public string ftpImages {
+            get {
+                return ((string)(this["ftpImages"]));
+            }
+            set {
+                this["ftpImages"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://www.ann.perm.ru/realtyimages/")]
+        public string ImagesUri {
+            get {
+                return ((string)(this["ImagesUri"]));
+            }
+            set {
+                this["ImagesUri"] = value;
             }
         }
     }

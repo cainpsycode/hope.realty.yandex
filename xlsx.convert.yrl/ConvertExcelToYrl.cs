@@ -19,13 +19,17 @@ namespace xlsx.convert.yrl
     {
         private Logger _logger;
         private SalesAgent _salesAgent;
+        private Uri _imagesUri;
+        private IEnumerable<string> _images;
 
         public Counters Counters { get; private set; }
 
-        public ConvertExcelToYrl(Logger logger, SalesAgent salesAgent)
+        public ConvertExcelToYrl(Logger logger, SalesAgent salesAgent, IEnumerable<string> images, string imagesUri)
         {
             _logger = logger;
             _salesAgent = salesAgent;
+            _images = images;
+            _imagesUri = new Uri(imagesUri);
             Counters = new Counters();
         }
 
@@ -274,7 +278,18 @@ namespace xlsx.convert.yrl
         /// <returns>Xml format string</returns>
         public XDocument GetXml(string filename, int skipRows)
         {
-            DataTable table = ReadExcelFile(filename, skipRows);
+            DataTable table;
+            try
+            {
+                table = ReadExcelFile(filename, skipRows);
+            }
+            catch (Exception ex)
+            {
+                Counters.ExceptionInc(ex);
+                _logger.Error("Ошибка чтения файла {0}: {1}", filename, ex);
+                return null;
+            }
+
             var offers = table.Rows.Cast<DataRow>().Select((i, n) =>
             {
                 try
@@ -394,6 +409,8 @@ namespace xlsx.convert.yrl
                     new XElement("value", safeParse(ColumnIndex.Price, i => decimal.Parse(i) * 1000m)),
                     new XElement("currency", "RUR")
                 ),
+                SelectImages((string)safeParse(ColumnIndex.Id, null)).Select(i => new XElement("image", new Uri(_imagesUri, i).AbsoluteUri)),
+//                _photos.Where(i => new Regex("").IsMatch())
 //                new XElement("image", null),
                 buildSpace("area", (string)safeParse(ColumnIndex.Area, null)),
                 new XElement[]
@@ -423,6 +440,16 @@ namespace xlsx.convert.yrl
             );
 
             return offer;
+        }
+
+        private IEnumerable<string> SelectImages(string id)
+        {
+            var matches = _images.Select(i => new Regex(@"^(\d+)_(\d+)\..*").Match(i));
+            return matches
+                .Where(i => i.Success && i.Groups[1].Value == "1")
+                .OrderBy(i => i.Groups[2].Value)
+                .Select(i => i.Value)
+                .ToList();
         }
 
 

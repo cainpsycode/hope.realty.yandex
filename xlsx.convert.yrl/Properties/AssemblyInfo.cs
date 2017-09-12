@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("xlsx.convert.yrl")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Excel converter to YRL")]
+[assembly: AssemblyDescription("Excel converter to YRL")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("LLC Nadezhda © Perm")]
 [assembly: AssemblyProduct("xlsx.convert.yrl")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]

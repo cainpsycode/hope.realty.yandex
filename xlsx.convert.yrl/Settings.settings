@@ -6,7 +6,7 @@
       <Value Profile="(Default)">ftp://ann.perm.ru</Value>
     </Setting>
     <Setting Name="ftpUser" Type="System.String" Scope="Application">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">uannpr30</Value>
     </Setting>
     <Setting Name="ftpPassword" Type="System.String" Scope="Application">
       <Value Profile="(Default)" />
@@ -28,6 +28,12 @@
     </Setting>
     <Setting Name="SkipRows" Type="System.Int32" Scope="Application">
       <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="ftpImages" Type="System.String" Scope="User">
+      <Value Profile="(Default)">realtyimages</Value>
+    </Setting>
+    <Setting Name="ImagesUri" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://www.ann.perm.ru/realtyimages/</Value>
     </Setting>
   </Settings>
 </SettingsFile>

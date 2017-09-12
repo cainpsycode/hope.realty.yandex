@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -52,7 +53,10 @@ namespace xlsx.convert.yrl
                 Settings.Default.AgentEmail,
                 Settings.Default.AgentLogo);
 
-            var converter = new ConvertExcelToYrl(_logger, salesAgent);
+            string imagesFolder = System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            IEnumerable<string> images = GetImages(imagesFolder);
+            var converter = new ConvertExcelToYrl(_logger, salesAgent, images, Settings.Default.ImagesUri);
+
             XDocument doc = converter.GetXml(
                 ofd.FileName,
                 Settings.Default.SkipRows);
@@ -66,6 +70,7 @@ namespace xlsx.convert.yrl
                 doc.Save("export.xml");
                 var client = new FtpWebClient(Settings.Default.ftpUrl, Settings.Default.ftpUser, Settings.Default.ftpPassword);
                 client.ChangeWorkingDirectory("httpdocs");
+                // Upload xml
                 string[] items = client.ListDirectory();
                 bool isExist = items.Any(i => i.Equals("httpdocs/hope-realty-yandex.xml"));
                 if (isExist)
@@ -74,9 +79,40 @@ namespace xlsx.convert.yrl
                 }
                 string result = client.UploadFile("export.xml", "hope-realty-yandex.xml");
                 _logger.Info($"ftp upload result: {result}");
+
+                // Upload images
+                if (!items.Any(i => i.Equals($"httpdocs/{Settings.Default.ftpImages}")))
+                {
+                    client.MakeDirectory(Settings.Default.ftpImages);
+                }
+
+                client.ChangeWorkingDirectory(Settings.Default.ftpImages);
+                items = client.ListDirectory();
+                foreach (var image in images)
+                {
+                    string destPath = $"{Settings.Default.ftpImages}/{image}";
+                    if (!items.Any(i => i.Equals(destPath)))
+                    {
+                        result = client.UploadFile(Path.Combine(imagesFolder, "YRL feed uploader - Photos", image), image);
+                        _logger.Info($"\t{image}: {result}");
+                    }
+                    else
+                    {
+                        _logger.Info($"\t{image}: exist");
+                    }
+                }
             }
             
             _logger.Info("finished");
         }
+
+        private static IEnumerable<string> GetImages(string sourceDir)
+        {
+            string photosFolder = Path.Combine(sourceDir, "YRL feed uploader - Photos");
+
+            DirectoryInfo d = new DirectoryInfo(photosFolder);
+            FileInfo[] photos = d.GetFiles("*.*");
+            return photos.Select(file => file.Name).ToList();
+        } 
     }
 }
